@@ -2163,6 +2163,18 @@ function openAdminStatsModal() {
                 return;
             }
 
+            // ترتيب الإحصائيات تنازلياً ليكون التاريخ الأحدث (الأقرب) في الأعلى دائماً
+            res.stats.sort((a, b) => {
+                const pA = (a.date || '').split('/');
+                const pB = (b.date || '').split('/');
+                if (pA.length === 3 && pB.length === 3) {
+                    const dA = new Date(parseInt(pA[2], 10), parseInt(pA[1], 10) - 1, parseInt(pA[0], 10));
+                    const dB = new Date(parseInt(pB[2], 10), parseInt(pB[1], 10) - 1, parseInt(pB[0], 10));
+                    return dB - dA;
+                }
+                return 0;
+            });
+
             let monthTotalSum = 0;
             let html = '<table class="sch-table"><thead><tr><th>التاريخ</th><th>اليوم</th><th>ذكور</th><th>إناث</th><th>الكلي</th></tr></thead><tbody>';
             res.stats.forEach(s => {
