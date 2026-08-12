@@ -1962,6 +1962,9 @@
         dataStore = res;
 
         if (res.theme) applyTheme(res.theme);
+        if (document.getElementById('monthVal')) {
+            document.getElementById('monthVal').innerText = res.month || '---';
+        }
         
         // تنفيذ الفتح التلقائي للشفت قبل أي عملية رسم أخرى
         if (!isBackground && res.shiftTimings) {
