@@ -2053,18 +2053,7 @@
         syncShines();
     }
 
-let allStatsCache = [];
-const STATS_CACHE_KEY = 'dialysis_stats_cache_v1';
-
-function saveStatsCache(stats) {
-    try { localStorage.setItem(STATS_CACHE_KEY, JSON.stringify(stats)); } catch (e) {}
-}
-
-function loadStatsCache() {
-    try { const raw = localStorage.getItem(STATS_CACHE_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
-}
-
-    function openAdminStatsModal() {
+function openAdminStatsModal() {
         if (!isAdminAuthenticated) return alert("هذه اللوحة خاصة بوضع الإدارة فقط");
         initStatsYearMonthSelectors();
         switchStatsTab('month');
@@ -2105,21 +2094,7 @@ function loadStatsCache() {
     }
 
     function loadAdminStats() {
-        const localData = loadStatsCache();
-        if (localData && localData.length > 0) {
-            allStatsCache = localData;
-            renderMonthlyStatsView(); // عرض فوري من الهاتف/الحاسوب
-        }
-        google.script.run.withSuccessHandler(res => {
-            if (res.success && res.stats) {
-                allStatsCache = res.stats;
-                saveStatsCache(res.stats); // حفظ النسخة في الهاتف
-                renderMonthlyStatsView();
-            } else if (!allStatsCache.length) {
-                const area = document.getElementById('adminStatsArea');
-                if (area) area.innerHTML = '<div class="text-center text-danger small py-3">تعذر جلب البيانات</div>';
-            }
-        }).getStatsData();
+        renderMonthlyStatsView();
     }
 
     function getDayNameFromDateStr(dateStr) {
@@ -2138,35 +2113,31 @@ function loadStatsCache() {
         const mVal = parseInt(document.getElementById('statsMonthSelect').value, 10);
         if (!area || !yVal || !mVal) return;
 
-        const filtered = allStatsCache.filter(s => {
-            if (!s.date) return false;
-            const parts = s.date.split('/');
-            if (parts.length < 3) return false;
-            const rowY = parseInt(parts[2], 10);
-            const rowM = parseInt(parts[1], 10);
-            return rowY === yVal && rowM === mVal;
-        });
+        area.innerHTML = '<div class="text-center text-muted small py-3"><i class="fas fa-spinner fa-spin me-1"></i> جاري جلب إحصائيات الشهر...</div>';
+        if (totalBanner) totalBanner.style.display = 'none';
 
-        if (!filtered.length) {
-            area.innerHTML = '<div class="text-center text-muted small py-3">لا توجد إحصائيات مرحلة لهذا الشهر</div>';
-            if (totalBanner) totalBanner.style.display = 'none';
-            return;
-        }
+        google.script.run.withSuccessHandler(res => {
+            if (!res.success || !res.stats || !res.stats.length) {
+                area.innerHTML = '<div class="text-center text-muted small py-3">لا توجد إحصائيات مرحلة لهذا الشهر</div>';
+                if (totalBanner) totalBanner.style.display = 'none';
+                return;
+            }
 
-        let monthTotalSum = 0;
-        let html = '<table class="sch-table"><thead><tr><th>التاريخ</th><th>اليوم</th><th>ذكور</th><th>إناث</th><th>الكلي</th></tr></thead><tbody>';
-        filtered.forEach(s => {
-            const dayName = getDayNameFromDateStr(s.date);
-            monthTotalSum += Number(s.total) || 0;
-            html += `<tr class="clickable" onclick="openEditDayStatsModal('${escapeHtml(s.date)}', ${s.male}, ${s.female})"><td>${escapeHtml(s.date)}</td><td class="text-muted fw-bold">${dayName}</td><td>${toArabicDigits(s.male)}</td><td>${toArabicDigits(s.female)}</td><td class="fw-bold text-primary">${toArabicDigits(s.total)}</td></tr>`;
-        });
-        html += '</tbody></table>';
-        area.innerHTML = html;
+            let monthTotalSum = 0;
+            let html = '<table class="sch-table"><thead><tr><th>التاريخ</th><th>اليوم</th><th>ذكور</th><th>إناث</th><th>الكلي</th></tr></thead><tbody>';
+            res.stats.forEach(s => {
+                const dayName = getDayNameFromDateStr(s.date);
+                monthTotalSum += Number(s.total) || 0;
+                html += `<tr class="clickable" onclick="openEditDayStatsModal('${escapeHtml(s.date)}', ${s.male}, ${s.female})"><td>${escapeHtml(s.date)}</td><td class="text-muted fw-bold">${dayName}</td><td>${toArabicDigits(s.male)}</td><td>${toArabicDigits(s.female)}</td><td class="fw-bold text-primary">${toArabicDigits(s.total)}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            area.innerHTML = html;
 
-        if (totalBanner) {
-            document.getElementById('monthlyTotalSumVal').innerText = toArabicDigits(monthTotalSum);
-            totalBanner.style.display = 'block';
-        }
+            if (totalBanner) {
+                document.getElementById('monthlyTotalSumVal').innerText = toArabicDigits(monthTotalSum);
+                totalBanner.style.display = 'block';
+            }
+        }).getStatsForMonth(yVal, mVal);
     }
 
     function openEditDayStatsModal(dateStr, male, female) {
@@ -2194,24 +2165,13 @@ function loadStatsCache() {
         const dateStr = document.getElementById('editDayStatsDate').value;
         const male = parseInt(document.getElementById('editDayMaleInput').value, 10) || 0;
         const female = parseInt(document.getElementById('editDayFemaleInput').value, 10) || 0;
-        const total = male + female;
 
-        // 1. تحديث وتعديل لحظي وفوري في شاشة جهازك (0 ثانية)
-        const idx = allStatsCache.findIndex(s => s.date === dateStr);
-        if (idx !== -1) {
-            allStatsCache[idx] = { date: dateStr, male: male, female: female, total: total };
-        } else {
-            allStatsCache.unshift({ date: dateStr, male: male, female: female, total: total });
-        }
-        saveStatsCache(allStatsCache);
-        renderMonthlyStatsView();
-        bootstrap.Modal.getInstance(document.getElementById('editDayStatsModal'))?.hide();
-
-        // 2. إرسال التعديل للسيرفر في الخلفية بدون تجميد الشاشة
         google.script.run.withSuccessHandler(res => {
-            if (!res.success) {
-                alert("❌ فشل التعديل في السيرفر: " + (res.error || ''));
-                loadAdminStats();
+            if (res.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editDayStatsModal'))?.hide();
+                renderMonthlyStatsView();
+            } else {
+                alert("❌ فشل التعديل: " + (res.error || ''));
             }
         }).updateDailyStatsRow(pwd, dateStr, male, female);
     }
@@ -2222,17 +2182,12 @@ function loadStatsCache() {
         const dateStr = document.getElementById('editDayStatsDate').value;
         if (!confirm(`هل أنت متأكد من حذف إحصائية يوم (${dateStr}) نهائياً؟`)) return;
 
-        // 1. حذف لحظي وفوري من الشاشة والذاكرة (0 ثانية)
-        allStatsCache = allStatsCache.filter(s => s.date !== dateStr);
-        saveStatsCache(allStatsCache);
-        renderMonthlyStatsView();
-        bootstrap.Modal.getInstance(document.getElementById('editDayStatsModal'))?.hide();
-
-        // 2. إرسال أمر الحذف للسيرفر في الخلفية
         google.script.run.withSuccessHandler(res => {
-            if (!res.success) {
-                alert("❌ فشل الحذف من السيرفر: " + (res.error || ''));
-                loadAdminStats();
+            if (res.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editDayStatsModal'))?.hide();
+                renderMonthlyStatsView();
+            } else {
+                alert("❌ فشل الحذف: " + (res.error || ''));
             }
         }).deleteDailyStatsRow(pwd, dateStr);
     }
@@ -2243,27 +2198,18 @@ function loadStatsCache() {
         const resCard = document.getElementById('rangeStatsResult');
         if (!fromVal || !toVal || !resCard) return;
 
-        const fromDate = new Date(fromVal + "T00:00:00");
-        const toDate = new Date(toVal + "T23:59:59");
-
-        let sumMale = 0, sumFemale = 0, sumTotal = 0;
-
-        allStatsCache.forEach(s => {
-            if (!s.date) return;
-            const parts = s.date.split('/');
-            if (parts.length < 3) return;
-            const d = new Date(parts[2] + "-" + String(parts[1]).padStart(2, '0') + "-" + String(parts[0]).padStart(2, '0') + "T12:00:00");
-            if (d >= fromDate && d <= toDate) {
-                sumMale += Number(s.male) || 0;
-                sumFemale += Number(s.female) || 0;
-                sumTotal += Number(s.total) || 0;
-            }
-        });
-
-        document.getElementById('rangeMaleVal').innerText = toArabicDigits(sumMale);
-        document.getElementById('rangeFemaleVal').innerText = toArabicDigits(sumFemale);
-        document.getElementById('rangeTotalVal').innerText = toArabicDigits(sumTotal);
         resCard.style.display = 'block';
+        document.getElementById('rangeMaleVal').innerText = "...";
+        document.getElementById('rangeFemaleVal').innerText = "...";
+        document.getElementById('rangeTotalVal').innerText = "...";
+
+        google.script.run.withSuccessHandler(res => {
+            if (res.success) {
+                document.getElementById('rangeMaleVal').innerText = toArabicDigits(res.male);
+                document.getElementById('rangeFemaleVal').innerText = toArabicDigits(res.female);
+                document.getElementById('rangeTotalVal').innerText = toArabicDigits(res.total);
+            }
+        }).getStatsForRange(fromVal, toVal);
     }
 
     function executeManualStatsRollover() {
@@ -2274,7 +2220,7 @@ function loadStatsCache() {
         google.script.run.withSuccessHandler(res => {
             if (res.success) {
                 alert("✅ تم ترحيل وحفظ إحصائية اليوم بنجاح في شيت 'الاحصائيات'");
-                loadAdminStats();
+                renderMonthlyStatsView();
             } else {
                 alert("❌ فشل الترحيل: " + (res.error || ''));
             }
