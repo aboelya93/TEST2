@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dialysis-cache-v5';
+const CACHE_NAME = 'dialysis-cache-v6';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
