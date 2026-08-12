@@ -1127,13 +1127,6 @@
                     <b class="small text-muted d-block mb-1">إضافة ملاحظة جديدة:</b>
                     <div class="d-flex flex-column gap-1">
                         <textarea id="newGenNoteInput" class="form-control form-control-sm fw-bold" rows="2" placeholder="اكتب الملاحظة الجديدة هنا..." style="border-radius: 8px; font-size: 0.75rem; resize: vertical;"></textarea>
-                        
-                        <!-- إدخال تاريخ ووقت انتهاء الملاحظة بشكل متجاور وبسيط يدعم منتقي التواريخ للهواتف -->
-                        <div class="d-flex align-items-center justify-content-center gap-1 my-1 p-1 rounded border bg-light" style="font-size: 0.7rem; flex-wrap: wrap;">
-                            <span class="fw-bold text-muted">حذف تلقائي في:</span>
-                            <input type="date" id="newGenNoteDate" class="form-control form-control-sm fw-bold text-center p-1" style="width: 110px; font-size: 0.7rem;">
-                            <input type="time" id="newGenNoteTime" class="form-control form-control-sm fw-bold text-center p-1" style="width: 70px; font-size: 0.7rem;">
-                        </div>
 
                         <!-- اختيار لون الخط للملاحظة الجديدة -->
                         <div class="d-flex align-items-center justify-content-center gap-2 mb-1 p-1 rounded border bg-light" style="font-size: 0.7rem;">
@@ -5168,24 +5161,10 @@ function loadStatsCache() {
             return alert("الحد الأقصى 15 ملاحظة! احذف ملاحظة لتوفير مكان.");
         }
         
-        const dateVal = document.getElementById('newGenNoteDate').value;
-        const timeVal = document.getElementById('newGenNoteTime').value || "00:00";
         const colorVal = document.getElementById('newGenNoteColor').value || "#000000";
         
-        let expiryTime = "";
-        if (dateVal) {
-            const dateTimeStr = `${dateVal}T${timeVal}`;
-            const expiryLocal = new Date(dateTimeStr);
-            if (!isNaN(expiryLocal.getTime())) {
-                const syncedExpiryMs = expiryLocal.getTime() - (window.clientServerOffset || 0);
-                expiryTime = new Date(syncedExpiryMs).toISOString();
-            }
-        }
-        
-        genNotesDraft.push({ text: text, expiry: expiryTime, color: colorVal });
+        genNotesDraft.push({ text: text, color: colorVal });
         inp.value = '';
-        document.getElementById('newGenNoteDate').value = '';
-        document.getElementById('newGenNoteTime').value = '';
         document.getElementById('newGenNoteColor').value = '#000000';
         renderGenNotesEditList();
     }
