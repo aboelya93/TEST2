@@ -1304,12 +1304,12 @@
     <div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable">
         <div class="modal-content" style="border-radius:15px;">
             <div class="modal-header bg-primary text-white py-2">
-                <h6 class="modal-title fw-bold mb-0"><i class="fas fa-chart-line ms-1"></i> إحصائيات وأرشيف الغسلات</h6>
+                <h6 class="modal-title fw-bold mb-0"><i class="fas fa-chart-line ms-1"></i> إحصائيات الغسلات</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-3">
                 <button class="btn btn-sm btn-success w-100 fw-bold mb-3" onclick="executeManualStatsRollover()">
-                    <i class="fas fa-save me-1"></i> ترحيل غسلات اليوم الآن
+                    <i class="fas fa-save me-1"></i> ترحيل غسلات اليوم المختار الآن
                 </button>
                 <div class="modal-nav-tabs mb-2">
                     <div class="modal-nav-tab active" id="tabStatsMonth" onclick="switchStatsTab('month')">إحصائية الشهر</div>
@@ -1350,10 +1350,50 @@
                     </div>
                     <div id="rangeStatsResult" class="p-2 border rounded text-center bg-light mt-2" style="display:none;">
                         <div class="small fw-bold text-muted mb-1">نتيجة المجموع للفترة المحددة:</div>
-                        <div class="d-flex justify-content-around fw-bold small">
+                        <div class="d-flex justify-content-around fw-bold small mb-2">
                             <div>ذكور: <span id="rangeMaleVal" class="text-info">0</span></div>
                             <div>إناث: <span id="rangeFemaleVal" class="text-danger">0</span></div>
                             <div>الكلي: <span id="rangeTotalVal" class="text-primary fs-6">0</span></div>
+                        </div>
+                        <button type="button" id="exportRangeStatsImgBtn" class="btn btn-sm btn-outline-primary w-100 fw-bold" onclick="exportRangeStatsAsImage()" style="display:none;">
+                            <i class="fas fa-image me-1"></i> تصدير التقرير كصورة (1x1)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- كرت التصدير الاحترافي أبعاد 1x1 المخصص للتصوير -->
+                <div id="rangeStatsExportCardWrap" style="position:fixed; left:-9999px; top:-9999px; pointer-events:none;">
+                    <div id="rangeStatsExportCard" style="width:600px; height:600px; background:#ffffff; color:#2c3e50; font-family:'Tajawal', sans-serif; display:flex; flex-direction:column; justify-content:space-around; padding:32px 30px; box-sizing:border-box; border-radius:24px; border:3px solid #1565c0; text-align:center;">
+                        <div style="background:linear-gradient(135deg, #1565c0 0%, #1976d2 100%); color:#ffffff; padding:16px; border-radius:16px; font-size:1.75rem; font-weight:800;">
+                            وحدة غسيل الكلى
+                        </div>
+                        
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:14px; display:flex; justify-content:space-around; align-items:center;">
+                            <div>
+                                <div style="font-size:1rem; font-weight:700; color:#64748b;">من</div>
+                                <div id="expFromDate" style="font-size:1.3rem; font-weight:800; color:#1e293b; margin-top:2px;">---</div>
+                            </div>
+                            <div style="font-size:1.4rem; color:#94a3b8; font-weight:800;">←</div>
+                            <div>
+                                <div style="font-size:1rem; font-weight:700; color:#64748b;">إلى</div>
+                                <div id="expToDate" style="font-size:1.3rem; font-weight:800; color:#1e293b; margin-top:2px;">---</div>
+                            </div>
+                        </div>
+
+                        <div style="background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border:1.5px solid #bfdbfe; border-radius:16px; padding:14px;">
+                            <div style="font-size:1.15rem; font-weight:800; color:#1e40af;">عدد الغسلات الكلي</div>
+                            <div id="expTotalVal" style="font-size:2.6rem; font-weight:900; color:#1d4ed8; line-height:1.2; margin-top:2px;">0</div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                            <div style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:16px; padding:12px;">
+                                <div style="font-size:1.05rem; font-weight:800; color:#166534;">الذكور</div>
+                                <div id="expMaleVal" style="font-size:2.1rem; font-weight:900; color:#15803d; margin-top:2px;">0</div>
+                            </div>
+                            <div style="background:#fef2f2; border:1.5px solid #fecaca; border-radius:16px; padding:12px;">
+                                <div style="font-size:1.05rem; font-weight:800; color:#991b1b;">الاناث</div>
+                                <div id="expFemaleVal" style="font-size:2.1rem; font-weight:900; color:#b91c1c; margin-top:2px;">0</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2117,7 +2157,7 @@ function openAdminStatsModal() {
         if (totalBanner) totalBanner.style.display = 'none';
 
         google.script.run.withSuccessHandler(res => {
-            if (!res.success || !res.stats || !res.stats.length) {
+            if (!res || !res.success || !res.stats || !res.stats.length) {
                 area.innerHTML = '<div class="text-center text-muted small py-3">لا توجد إحصائيات مرحلة لهذا الشهر</div>';
                 if (totalBanner) totalBanner.style.display = 'none';
                 return;
@@ -2137,6 +2177,9 @@ function openAdminStatsModal() {
                 document.getElementById('monthlyTotalSumVal').innerText = toArabicDigits(monthTotalSum);
                 totalBanner.style.display = 'block';
             }
+        }).withFailureHandler(err => {
+            area.innerHTML = '<div class="text-center text-danger small py-3">تعذر جلب الإحصائيات، أعد المحاولة</div>';
+            if (totalBanner) totalBanner.style.display = 'none';
         }).getStatsForMonth(yVal, mVal);
     }
 
@@ -2167,12 +2210,14 @@ function openAdminStatsModal() {
         const female = parseInt(document.getElementById('editDayFemaleInput').value, 10) || 0;
 
         google.script.run.withSuccessHandler(res => {
-            if (res.success) {
+            if (res && res.success) {
                 bootstrap.Modal.getInstance(document.getElementById('editDayStatsModal'))?.hide();
                 renderMonthlyStatsView();
             } else {
-                alert("❌ فشل التعديل: " + (res.error || ''));
+                alert("❌ فشل التعديل: " + (res ? res.error : 'خطأ غير معروف'));
             }
+        }).withFailureHandler(err => {
+            alert("❌ خطأ أثناء التعديل: " + err.message);
         }).updateDailyStatsRow(pwd, dateStr, male, female);
     }
 
@@ -2183,12 +2228,14 @@ function openAdminStatsModal() {
         if (!confirm(`هل أنت متأكد من حذف إحصائية يوم (${dateStr}) نهائياً؟`)) return;
 
         google.script.run.withSuccessHandler(res => {
-            if (res.success) {
+            if (res && res.success) {
                 bootstrap.Modal.getInstance(document.getElementById('editDayStatsModal'))?.hide();
                 renderMonthlyStatsView();
             } else {
-                alert("❌ فشل الحذف: " + (res.error || ''));
+                alert("❌ فشل الحذف: " + (res ? res.error : 'خطأ غير معروف'));
             }
+        }).withFailureHandler(err => {
+            alert("❌ خطأ أثناء الحذف: " + err.message);
         }).deleteDailyStatsRow(pwd, dateStr);
     }
 
@@ -2196,35 +2243,78 @@ function openAdminStatsModal() {
         const fromVal = document.getElementById('statsFromDate').value;
         const toVal = document.getElementById('statsToDate').value;
         const resCard = document.getElementById('rangeStatsResult');
+        const exportBtn = document.getElementById('exportRangeStatsImgBtn');
         if (!fromVal || !toVal || !resCard) return;
 
         resCard.style.display = 'block';
+        if (exportBtn) exportBtn.style.display = 'none';
         document.getElementById('rangeMaleVal').innerText = "...";
         document.getElementById('rangeFemaleVal').innerText = "...";
         document.getElementById('rangeTotalVal').innerText = "...";
 
         google.script.run.withSuccessHandler(res => {
-            if (res.success) {
-                document.getElementById('rangeMaleVal').innerText = toArabicDigits(res.male);
-                document.getElementById('rangeFemaleVal').innerText = toArabicDigits(res.female);
-                document.getElementById('rangeTotalVal').innerText = toArabicDigits(res.total);
+            if (res && res.success) {
+                const maleStr = toArabicDigits(res.male);
+                const femaleStr = toArabicDigits(res.female);
+                const totalStr = toArabicDigits(res.total);
+
+                document.getElementById('rangeMaleVal').innerText = maleStr;
+                document.getElementById('rangeFemaleVal').innerText = femaleStr;
+                document.getElementById('rangeTotalVal').innerText = totalStr;
+
+                // تحديث بيانات كرت التصدير المربع (1x1) بالأرقام الإنجليزية المباشرة
+                const fromParts = fromVal.split('-');
+                const toParts = toVal.split('-');
+                const fromFormatted = fromParts.length === 3 ? `${fromParts[2]}/${fromParts[1]}/${fromParts[0]}` : fromVal;
+                const toFormatted = toParts.length === 3 ? `${toParts[2]}/${toParts[1]}/${toParts[0]}` : toVal;
+
+                document.getElementById('expFromDate').innerText = fromFormatted;
+                document.getElementById('expToDate').innerText = toFormatted;
+                document.getElementById('expTotalVal').innerText = res.total;
+                document.getElementById('expMaleVal').innerText = res.male;
+                document.getElementById('expFemaleVal').innerText = res.female;
+
+                if (exportBtn) exportBtn.style.display = 'block';
             }
         }).getStatsForRange(fromVal, toVal);
+    }
+
+    function exportRangeStatsAsImage() {
+        const card = document.getElementById('rangeStatsExportCard');
+        if (!card) return;
+
+        const fromVal = document.getElementById('statsFromDate').value || 'تاريخ';
+        const toVal = document.getElementById('statsToDate').value || 'تاريخ';
+
+        html2canvas(card, {
+            scale: 3, // دقة عالية جداً (HD)
+            useCORS: true,
+            backgroundColor: '#ffffff'
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `تقرير_وحدة_الغسيل_${fromVal}_إلى_${toVal}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }).catch(err => {
+            alert("تعذر تصدير الصورة: " + err.message);
+        });
     }
 
     function executeManualStatsRollover() {
         const pwd = scheduleEditorPassword;
         if (!pwd) return alert("الرجاء تسجيل الدخول كمسؤول أولاً");
-        if (!confirm("هل تريد ترحيل وإضافة إحصائية غسلات هذا اليوم إلى شيت الاحصائيات الآن؟")) return;
+        const dayCol = parseInt(document.getElementById('dayPicker').value, 10) || 1;
+        const dayName = DAYS_REF[dayCol - 1] || "";
+        if (!confirm(`هل تريد ترحيل/تحديث إحصائية غسلات (يوم ${dayName}) المختار للأسبوع الحالي؟`)) return;
 
         google.script.run.withSuccessHandler(res => {
-            if (res.success) {
-                alert("✅ تم ترحيل وحفظ إحصائية اليوم بنجاح في شيت 'الاحصائيات'");
+            if (res && res.success) {
+                alert(`✅ تم ترحيل وحفظ إحصائية (يوم ${dayName}) بنجاح في شيت 'الاحصائيات'`);
                 renderMonthlyStatsView();
             } else {
-                alert("❌ فشل الترحيل: " + (res.error || ''));
+                alert("❌ فشل الترحيل: " + (res ? res.error : ''));
             }
-        }).recordDailyStatsManual(pwd);
+        }).recordDailyStatsManual(pwd, dayCol);
     }
 
     function openAdminLoginModal() {
