@@ -2999,13 +2999,15 @@ function updateFormHbvNextDate() {
             let combined = [...mainList, ...postList];
             let pRows = '';
             
-            // استخدام DocumentFragment أو بناء سلسلة نصية ضخمة مرة واحدة أسرع من العمليات المتكررة
-            let pRowsArray = [];
-            for (let idx = 0; idx < combined.length; idx++) {
-                const p = combined[idx];
-                const isDark = document.body.classList.contains('dark-mode');
+            combined.forEach((p, idx) => {
                 let bgColor = (p.clr && p.clr !== "#ffffff") ? p.clr : "transparent";
-                let badgeColor = (bgColor === "transparent") ? (isDark ? "#e8edf3" : "#333") : getCellDisplayColors(bgColor).color;
+                let badgeColor = "inherit";
+                if (bgColor !== "transparent") {
+                    const displayColors = getCellDisplayColors(bgColor);
+                    badgeColor = displayColors.color;
+                } else {
+                    badgeColor = document.body.classList.contains('dark-mode') ? "#e8edf3" : "#333";
+                }
                 
                 let chips = '';
                 if (p.c.filter) chips += `<span class="info-chip">${p.c.filter}</span>`;
