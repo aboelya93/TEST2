@@ -991,9 +991,9 @@
                 <i class="fas fa-user-lock text-muted"></i>
             </button>
 
-            <!-- زر لوحة الإحصائيات للتحكم بوضع الإدارة أقصى اليمين -->
-            <button id="adminStatsBtn" class="action-btn admin-only" onclick="openAdminStatsModal()" style="position: absolute; right: 0; width: 36px; height: 36px; border-radius: 50%; box-shadow: var(--shadow-sm); display: none;" title="لوحة الإحصائيات والترحيل">
-                <i class="fas fa-chart-line text-primary"></i>
+            <!-- زر تعديل الجدول المباشر أصبح هنا في الزاوية العلوية للمسؤول -->
+            <button id="adminStatsBtn" class="action-btn admin-only" onclick="openScheduleView()" style="position: absolute; right: 0; width: 36px; height: 36px; border-radius: 50%; box-shadow: var(--shadow-sm); display: none;" title="الدخول لتعديل الجدول">
+                <i class="fas fa-table-cells text-primary"></i>
             </button>
             
             <!-- نصوص العنوان موسطة 100% بالكامل بعد حذف اللوغو -->
@@ -1003,7 +1003,8 @@
             </div>
         </div>
         
-        <div class="stats-bar">
+        <!-- شريط الإحصائيات أصبح هو المفتاح لفتح لوحة الإحصائيات للمسؤول بصمت -->
+        <div class="stats-bar" onclick="openAdminStatsModal()" style="cursor: pointer;">
             <div class="stat-item"><i class="fas fa-mars text-info"></i> <span class="stat-value" id="maleCount">0</span><div class="stat-label">ذكور</div></div>
             <div class="stat-item"><i class="fas fa-venus text-danger"></i> <span class="stat-value" id="femaleCount">0</span><div class="stat-label">إناث</div></div>
             <div class="stat-item"><i class="fas fa-users text-primary"></i> <span class="stat-value" id="totalCount">0</span><div class="stat-label">إجمالي</div></div>
@@ -1017,12 +1018,24 @@
             <button class="action-btn" onclick="openInfoOverlay()" title="تفاصيل المرضى"><i class="fas fa-id-card text-info"></i></button>
             <button class="action-btn" onclick="openAzModal()" title="ترتيب أبجدي"><i class="fas fa-sort-alpha-down text-primary"></i></button>
             <button class="action-btn" onclick="openSupplyModal()" title="تجهيز الطلبية"><i class="fas fa-box-open text-warning"></i></button>
-            <button class="action-btn" onclick="openVaccineModal()" title="الموقف اللقاحي"><i class="fas fa-syringe text-danger"></i></button>
+            <button id="vaccineFilterBtn" class="action-btn position-relative" onclick="openVaccineModal()" title="الموقف اللقاحي">
+                <i id="vaccineIcon" class="fas fa-syringe" style="color: #0d6efd;"></i>
+                <!-- عداد إشعارات اللقاحات -->
+                <span id="vaccineBadge" class="position-absolute badge rounded-pill bg-danger" 
+                      style="display:none; font-size: 0.62rem; padding: 2px 4px; top: -5px; right: -5px; min-width: 16px; height: 16px; border: 1.5px solid white; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                    0
+                </span>
+            </button>
             
             <!-- زر تعديل الجدول المربع الجديد باللمعة الداخلية تم نقله ليصبح بجانب الأزرار -->
-            <button id="editScheduleBlockBtn" class="edit-schedule-block-btn admin-only" onclick="openScheduleView()" title="تعديل الجدول (محمي)" style="display: none;">
-                <span class="btn-shine"></span>
-                <i class="fas fa-table-cells"></i>
+            <!-- زر مراقب فلاتر الأجهزة الجديد (مطابق لبقية الأزرار) -->
+            <button id="machineFilterBtn" class="action-btn position-relative" onclick="openMachineModal()" title="تبديل فلاتر الأجهزة">
+                <i id="machineIcon" class="fas fa-tools" style="color: #9c27b0;"></i>
+                <!-- عداد إشعارات دقيق الموضع -->
+                <span id="machineBadge" class="position-absolute badge rounded-pill bg-danger" 
+                      style="display:none; font-size: 0.62rem; padding: 2px 4px; top: -5px; right: -5px; min-width: 16px; height: 16px; border: 1.5px solid white; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                    0
+                </span>
             </button>
         </div>
     </div>
@@ -1210,7 +1223,8 @@
             <div class="modal-body p-2">
                 <select id="vaccineFilterSelect" class="form-select form-select-sm fw-bold mb-2 text-center" onchange="onVaccineFilterChange(this.value)">
                     <option value="all">الكل</option>
-                    <option value="due">المستحقين</option>
+                    <option value="upcoming">مواعيد الجرعات القادمة</option>
+                    <option value="due">المستحقين حالياً</option>
                     <option value="full">ملقح (3 جرعات)</option>
                     <option value="v2">ملقح جرعتين</option>
                     <option value="v1">ملقح جرعة واحدة</option>
@@ -1649,6 +1663,41 @@
                 <button class="btn btn-dark w-100 fw-bold" onclick="verifyScheduleEditorPassword()">
                     <i class="fas fa-sign-in-alt me-1"></i> دخول
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة مراقب فلاتر الأجهزة -->
+<div class="modal fade" id="machineModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:15px;">
+            <div class="modal-header bg-purple text-white py-2" style="background-color: #9c27b0;">
+                <h6 class="modal-title fw-bold mb-0"><i class="fas fa-microchip ms-1"></i> تبديل فلاتر الأجهزة</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <!-- زر الإضافة للمسؤول فقط -->
+                <button id="addNewMachineBtn" class="btn btn-sm btn-purple w-100 fw-bold mb-3 admin-only" onclick="showAddMachineForm()" style="background-color: #9c27b0; color: white; display:none;">
+                    <i class="fas fa-plus-circle me-1"></i> إضافة جهاز جديد
+                </button>
+
+                <!-- نموذج الإضافة/التعديل (مخفي) -->
+                <div id="machineFormArea" style="display:none;" class="border p-2 rounded mb-3 bg-light">
+                    <input type="hidden" id="editMachineOldId">
+                    <input type="number" id="machineId" class="form-control form-control-sm mb-2 fw-bold" placeholder="رقم الجهاز (مثلاً 1)">
+                    <input type="number" id="machineFreq" class="form-control form-control-sm mb-2 fw-bold" placeholder="مدة الصيانة (مثلاً 90 يوم)">
+                    <label class="small fw-bold text-muted">تاريخ آخر تبديل:</label>
+                    <input type="date" id="machineLastChange" class="form-control form-control-sm mb-2 fw-bold">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success btn-sm flex-fill fw-bold" onclick="saveMachine()">حفظ</button>
+                        <button class="btn btn-secondary btn-sm flex-fill fw-bold" onclick="hideMachineForm()">إلغاء</button>
+                    </div>
+                </div>
+
+                <div id="machineListArea">
+                    <div class="text-center text-muted small py-3">جاري تحميل البيانات...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -2256,6 +2305,7 @@
             alert('تعذر الاتصال بالجدول. تحقق من الشبكة ثم حاول مجدداً.\n' + (err && err.message ? err.message : ''));
         }).getUnifiedData();
     }
+    
 
     function applyDataFromResponse(res, isBackground) {
         if (!res || !res.success) return;
@@ -2307,6 +2357,10 @@
         updateStaffNotesBadge();
         updateAdminUI();
         refreshInfoOverlayIfOpen();
+        
+        // فحص إشعارات الأجهزة واللقاحات فوراً عند تشغيل البرنامج (Offline Support)
+        if (typeof updateMachineNotificationBadge === "function") updateMachineNotificationBadge();
+        if (typeof updateVaccineNotificationBadge === "function") updateVaccineNotificationBadge();
     }
 
     function prefillAdminPasswordInputs() {
@@ -2361,7 +2415,9 @@
     }
 
 function openAdminStatsModal() {
-        if (!isAdminAuthenticated) return alert("هذه اللوحة خاصة بوضع الإدارة فقط");
+        // الخروج من الدالة بصمت تام إذا لم يكن المستخدم في وضع الإدارة
+        if (!isAdminAuthenticated) return;
+
         initStatsYearMonthSelectors();
         switchStatsTab('month');
         
@@ -2943,15 +2999,13 @@ function updateFormHbvNextDate() {
             let combined = [...mainList, ...postList];
             let pRows = '';
             
-            combined.forEach((p, idx) => {
+            // استخدام DocumentFragment أو بناء سلسلة نصية ضخمة مرة واحدة أسرع من العمليات المتكررة
+            let pRowsArray = [];
+            for (let idx = 0; idx < combined.length; idx++) {
+                const p = combined[idx];
+                const isDark = document.body.classList.contains('dark-mode');
                 let bgColor = (p.clr && p.clr !== "#ffffff") ? p.clr : "transparent";
-                let badgeColor = "inherit";
-                if (bgColor !== "transparent") {
-                    const displayColors = getCellDisplayColors(bgColor);
-                    badgeColor = displayColors.color;
-                } else {
-                    badgeColor = document.body.classList.contains('dark-mode') ? "#e8edf3" : "#333";
-                }
+                let badgeColor = (bgColor === "transparent") ? (isDark ? "#e8edf3" : "#333") : getCellDisplayColors(bgColor).color;
                 
                 let chips = '';
                 if (p.c.filter) chips += `<span class="info-chip">${p.c.filter}</span>`;
@@ -5340,91 +5394,115 @@ function updateFormHbvNextDate() {
     }
 
     function renderVaccineList(filter) {
-        const area = document.getElementById('vaccineListArea');
-        if (!area || !dataStore || !dataStore.patientsDetailedInfo) return;
+    const area = document.getElementById('vaccineListArea');
+    if (!area || !dataStore || !dataStore.patientsDetailedInfo) return;
 
-        const allPatients = [];
-        for (let i = 0; i < dataStore.patientsDetailedInfo.length; i++) {
-            const p = dataStore.patientsDetailedInfo[i];
-            allPatients.push({
-                name: p["اسم المريض"] || "غير محدد",
-                vInfo: getVaccineStatusInfo(p)
-            });
+    const now = new Date();
+    now.setHours(0,0,0,0);
+
+    const allPatients = [];
+    // عداد إضافي لـ upcoming (المواعيد القادمة)
+    let counts = { all: 0, upcoming: 0, due: 0, full: 0, v2: 0, v1: 0, none: 0 };
+
+    dataStore.patientsDetailedInfo.forEach(p => {
+        const vStatus = getVaccineStatusInfo(p);
+        let isDueSoon = false;
+        let hasUpcoming = false;
+        let diffDays = 9999; // قيمة كبيرة جداً للمرضى بدون مواعيد قادمة
+
+        if (vStatus.nextDateStr && vStatus.nextDateStr !== "---") {
+            const nextDoseDate = new Date(vStatus.nextDateStr.replace(/\//g, '-'));
+            diffDays = Math.ceil((nextDoseDate - now) / (1000 * 60 * 60 * 24));
+            
+            hasUpcoming = true; // المريض ينتظر جرعة قادمة
+            if (diffDays <= 10) isDueSoon = true; // مستحق حالياً (تنبيه)
         }
 
-        let counts = { all: allPatients.length, due: 0, full: 0, v2: 0, v1: 0, none: 0 };
+        // تحديث العدادات للفلتر
+        counts.all++;
+        if (hasUpcoming) counts.upcoming++;
+        if (isDueSoon) counts.due++;
+        
+        if (vStatus.statusKey === 'full') counts.full++;
+        else if (vStatus.statusKey === 'v2') counts.v2++;
+        else if (vStatus.statusKey === 'v1') counts.v1++;
+        else counts.none++;
 
-        for (let i = 0; i < allPatients.length; i++) {
-            const vi = allPatients[i].vInfo;
-            if (vi.nextDateStr && vi.nextDateStr !== "---") counts.due++;
-            if (vi.statusKey === 'full') counts.full++;
-            if (vi.statusKey === 'v2') counts.v2++;
-            if (vi.statusKey === 'v1') counts.v1++;
-            if (vi.statusKey === 'none') counts.none++;
-        }
+        allPatients.push({
+            name: p["اسم المريض"] || "غير محدد",
+            vInfo: vStatus,
+            isDueSoon: isDueSoon,
+            hasUpcoming: hasUpcoming,
+            diffDays: diffDays
+        });
+    });
 
-        const sel = document.getElementById('vaccineFilterSelect');
-        if (sel) {
-            const opts = sel.options;
-            for (let i = 0; i < opts.length; i++) {
-                const val = opts[i].value;
-                if (val === 'all') opts[i].text = "الكل (" + counts.all + ")";
-                else if (val === 'due') opts[i].text = "المستحقين (" + counts.due + ")";
-                else if (val === 'full') opts[i].text = "ملقح (" + counts.full + ")";
-                else if (val === 'v2') opts[i].text = "ملقح جرعتين (" + counts.v2 + ")";
-                else if (val === 'v1') opts[i].text = "ملقح جرعة واحدة (" + counts.v1 + ")";
-                else if (val === 'none') opts[i].text = "غير ملقح (" + counts.none + ")";
-            }
-        }
-
-        let filtered = [];
-        for (let i = 0; i < allPatients.length; i++) {
-            const p = allPatients[i];
-            if (filter === 'due' && p.vInfo.nextDateStr !== "---") filtered.push(p);
-            else if (filter === 'full' && p.vInfo.statusKey === 'full') filtered.push(p);
-            else if (filter === 'v2' && p.vInfo.statusKey === 'v2') filtered.push(p);
-            else if (filter === 'v1' && p.vInfo.statusKey === 'v1') filtered.push(p);
-            else if (filter === 'none' && p.vInfo.statusKey === 'none') filtered.push(p);
-            else if (filter === 'all') filtered.push(p);
-        }
-
-        if (filter === 'due') {
-            filtered.sort(function(a, b) {
-                const dA = new Date(a.vInfo.nextDateStr.replace(/\//g, '-'));
-                const dB = new Date(b.vInfo.nextDateStr.replace(/\//g, '-'));
-                return dA - dB;
-            });
-        } else {
-            filtered.sort(function(a, b) {
-                return a.name.localeCompare(b.name, 'ar');
-            });
-        }
-
-        if (filtered.length === 0) {
-            area.innerHTML = '<div class="text-center text-muted small py-4">لا يوجد مرضى في هذه القائمة</div>';
-            return;
-        }
-
-        let html = '';
-        for (let i = 0; i < filtered.length; i++) {
-            const p = filtered[i];
-            const vi = p.vInfo;
-            const nextDisp = (vi.nextDateStr && vi.nextDateStr !== "---") ? formatDateToArabicDDMMYYYY(vi.nextDateStr) : "---";
-            const safeName = escapeHtml(p.name);
-
-            html += '<div class="card p-2 mb-2 border shadow-sm" style="background: var(--bg-card); cursor: pointer;" data-pname="' + safeName + '" onclick="viewPatientDetailByName(this.getAttribute(\'data-pname\'))">';
-            html += '<div class="d-flex align-items-center justify-content-between">';
-            html += '<span class="fw-bold small text-primary">' + (i + 1) + '. ' + safeName + '</span>';
-            html += '<span class="badge ' + vi.badgeClass + ' fw-bold" style="font-size:0.68rem; padding: 4px 8px;">' + escapeHtml(vi.statusText) + '</span>';
-            html += '</div>';
-            if (vi.nextDateStr && vi.nextDateStr !== "---") {
-                html += '<div class="text-center small fw-bold text-danger mt-1">موعد الجرعة القادمة: ' + nextDisp + '</div>';
-            }
-            html += '</div>';
-        }
-
-        area.innerHTML = html;
+    // تحديث نصوص الفلتر بالأرقام الجديدة (لاحظ أن ترتيب الـ options يجب أن يطابق الـ HTML)
+    const sel = document.getElementById('vaccineFilterSelect');
+    if (sel) {
+        sel.options[0].text = `الكل (${toArabicDigits(counts.all)})`;
+        sel.options[1].text = `مواعيد الجرعات (${toArabicDigits(counts.upcoming)})`;
+        sel.options[2].text = `المستحقين حالياً (${toArabicDigits(counts.due)})`;
+        sel.options[3].text = `ملقح (3 جرعات) (${toArabicDigits(counts.full)})`;
+        sel.options[4].text = `ملقح جرعتين (${toArabicDigits(counts.v2)})`;
+        sel.options[5].text = `ملقح جرعة واحدة (${toArabicDigits(counts.v1)})`;
+        sel.options[6].text = `غير ملقح (${toArabicDigits(counts.none)})`;
     }
+
+    let filtered = allPatients.filter(p => {
+        if (filter === 'upcoming') return p.hasUpcoming; // الفلتر الجديد
+        if (filter === 'due') return p.isDueSoon;
+        if (filter === 'all') return true;
+        return p.vInfo.statusKey === filter;
+    });
+
+    // منطق الترتيب الذكي:
+    if (filter === 'all' || filter === 'full' || filter === 'none' || filter === 'v1' || filter === 'v2') {
+        // ترتيب أبجدي عند عرض الكل أو التصنيفات الثابتة
+        filtered.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+    } else {
+        // ترتيب زمني (من الأقرب للأبعد) عند عرض "المستحقين" أو "المواعيد القادمة"
+        filtered.sort((a, b) => a.diffDays - b.diffDays);
+    }
+
+    let html = '';
+    filtered.forEach((p, i) => {
+        const vi = p.vInfo;
+        const nextDisp = (vi.nextDateStr && vi.nextDateStr !== "---") ? formatDateToArabicDDMMYYYY(vi.nextDateStr) : "---";
+        
+        let cardStyle = "background: var(--bg-card); border: 1px solid var(--border) !important;";
+        let dateTextClass = "text-muted";
+
+        if (p.isDueSoon) {
+            // المريض المستحق (أقل من 10 أيام)
+            cardStyle = "background: #fff5f5; border: 1.5px solid #dc3545 !important; box-shadow: 0 2px 8px rgba(220,53,69,0.1);";
+            dateTextClass = "text-danger";
+        } else if (p.hasUpcoming) {
+            // المريض الذي لديه موعد قادم ولكنه ليس "مستحق" بعد (أكثر من 10 أيام)
+            cardStyle = "background: #f0f7ff; border: 1px solid #0d6efd !important;";
+            dateTextClass = "text-primary";
+        }
+
+        html += `
+        <div class="card p-2 mb-2 border shadow-sm" style="${cardStyle}" data-pname="${escapeHtml(p.name)}" onclick="viewPatientDetailByName(this.getAttribute('data-pname'))">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="fw-bold small ${p.isDueSoon ? 'text-danger' : 'text-primary'}">${i + 1}. ${escapeHtml(p.name)}</span>
+                <span class="badge ${vi.badgeClass} fw-bold" style="font-size:0.68rem; padding: 4px 8px;">${escapeHtml(vi.statusText)}</span>
+            </div>
+            ${vi.nextDateStr && vi.nextDateStr !== "---" ? `
+                <div class="text-center small fw-bold ${dateTextClass} mt-1">
+                    ${p.diffDays <= 0 ? '⚠️ استحق اللقاح منذ: ' : 'موعد الجرعة القادمة: '} ${nextDisp} 
+                    <span style="font-size: 0.6rem;">(${toArabicDigits(Math.abs(p.diffDays))} يوم)</span>
+                </div>
+            ` : ''}
+        </div>`;
+    });
+
+    area.innerHTML = html || '<div class="text-center text-muted small py-4">لا يوجد مرضى في هذه القائمة</div>';
+    
+    // تحديث إشعار الأيقونة في الشاشة الرئيسية
+    if (typeof updateVaccineNotificationBadge === "function") updateVaccineNotificationBadge();
+}
     
     function openAzModal() { 
         if(!dataStore || !dataStore.schedule) return;
@@ -5565,17 +5643,10 @@ function updateFormHbvNextDate() {
 
     // فتح نافذة تعديل الملاحظات العامة بأمان وتفادي تجميد الخلفية
     function openGenNotesEditor() {
-        if (!isAdminAuthenticated) {
-            document.getElementById('scheduleEditorPassword').value = '';
-            prefillAdminPasswordInputs();
-            window._pendingGenNotesOpen = true;
-            
-            const authEl = document.getElementById('scheduleAuthModal');
-            let authMdl = bootstrap.Modal.getInstance(authEl);
-            if (!authMdl) authMdl = new bootstrap.Modal(authEl);
-            authMdl.show();
-            return;
-        }
+        // الخروج الصامت تماماً للمستخدم العادي دون طلب أي رموز
+        if (!isAdminAuthenticated) return;
+
+        // تم حذف كود استدعاء شاشة تسجيل الدخول لضمان عدم حدوث إزعاج
 
         // 1. جلب نسخة مودال "ملاحظات الكادر" وإغلاقها بأمان إذا كانت مفتوحة
         const staffMdlEl = document.getElementById('staffNotesModal');
@@ -5956,12 +6027,56 @@ function updateFormHbvNextDate() {
             btn.innerText = "حفظ بيانات المريض";
             if (res.success) {
                 const savedName = pData.fullName;
-                window._pendingViewPatientName = savedName;
+                
+                // 1. تحديث الذاكرة المحلية (dataStore) فوراً بالبيانات الجديدة لضمان السرعة
+                if (dataStore && dataStore.patientsDetailedInfo) {
+                    const patientObj = {
+                        "اسم المريض": pData.fullName,
+                        "رقم الطبلة": pData.tabletNum,
+                        "الجنس": pData.gender,
+                        "العمر": pData.age,
+                        "الوزن": pData.weight,
+                        "المهنة": pData.job,
+                        "عنوان السكن": pData.address,
+                        "الطبيب": pData.doctor,
+                        "الفلتر": pData.filter,
+                        "رقم الموبايل 1": pData.phone1,
+                        "رقم الموبايل 2": pData.phone2,
+                        "Fistula": pData.fistula,
+                        "تاريخ الدخول": pData.entryDate,
+                        "عدد الغسلات الأسبوعي": pData.weeklySessions,
+                        "HBV1": pData.hbv1,
+                        "HBV2": pData.hbv2,
+                        "HBV3": pData.hbv3
+                    };
+
+                    const idx = dataStore.patientsDetailedInfo.findIndex(p => 
+                        normalizePatientName(p["اسم المريض"]) === normalizePatientName(isEditingPatientMode ? currentEditingPatientName : savedName)
+                    );
+
+                    if (idx !== -1) {
+                        dataStore.patientsDetailedInfo[idx] = patientObj;
+                    } else {
+                        dataStore.patientsDetailedInfo.push(patientObj);
+                    }
+                    
+                    // تحديث مصفوفة الأسماء والخرائط لضمان دقة البحث
+                    rebuildPatientLookupMap();
+                }
+
+                // 2. ضبط حالة الوضع
                 isEditingPatientMode = false;
                 currentEditingPatientName = savedName;
+
+                // 3. تحديث الواجهة فوراً
                 document.getElementById('pEditFormArea').style.display = 'none';
-                document.getElementById('pSearchArea').style.display = 'block';
-                document.getElementById('pDetailArea').style.display = 'none';
+                document.getElementById('pDetailArea').style.display = 'block';
+                document.getElementById('pSearchArea').style.display = 'none';
+
+                // الآن ستظهر المعلومات الجديدة فوراً لأننا حدثنا dataStore يدوياً
+                viewPatientDetail(savedName); 
+
+                // 4. طلب مزامنة نهائية من السيرفر في الخلفية
                 fetchDataFromServer(true);
             } else {
                 alert("❌ فشل الرفع: " + res.error);
@@ -6432,6 +6547,265 @@ function executeEndSession() {
             }
         }).saveShiftTimingsServer(pwd, timings);
     }
+
+    function openMachineModal() {
+    const el = document.getElementById('machineModal');
+    let mdl = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+    mdl.show();
+    loadMachines();
+}
+
+function loadMachines() {
+    const area = document.getElementById('machineListArea');
+    // القراءة من الذاكرة المخزنة (Offline) لضمان سرعة فائقة
+    if (dataStore && dataStore.machinesData) {
+        renderMachineList(dataStore.machinesData);
+    } else {
+        area.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin"></i> جاري جلب البيانات...</div>';
+        refreshDataNow(); // تحديث البيانات إذا كانت الذاكرة فارغة
+    }
+}
+
+function renderMachineList(machines) {
+    const area = document.getElementById('machineListArea');
+    if (!machines.length) {
+        area.innerHTML = '<div class="text-center text-muted py-3">لا توجد أجهزة مضافة</div>';
+        return;
+    }
+
+    const formatDateCorrect = (dateInput) => {
+        const dateObj = new Date(dateInput);
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const year = dateObj.getFullYear();
+        return year + '/' + month + '/' + day;
+    };
+
+    let html = '';
+    const now = new Date();
+    now.setHours(0,0,0,0);
+
+    machines.forEach(m => {
+        const lastDateObj = new Date(m.lastDate);
+        const nextDateObj = new Date(lastDateObj);
+        nextDateObj.setDate(lastDateObj.getDate() + parseInt(m.freq));
+        
+        const diffDays = Math.ceil((nextDateObj - now) / (1000 * 60 * 60 * 24));
+        
+        // التنسيق الافتراضي (سليم)
+        let statusColor = "text-success";
+        let cardStyle = "background: rgba(40, 167, 69, 0.05); border: 1px solid var(--border) !important;";
+
+        // إذا كان الاستحقاق خلال 3 أيام أو أقل
+        if (diffDays <= 3) {
+            statusColor = "text-danger";
+            // خلفية حمراء فاتحة جداً وإطار أحمر غامق للتنبيه
+            cardStyle = "background: #fff5f5; border: 1.5px solid #dc3545 !important; box-shadow: 0 2px 8px rgba(220,53,69,0.1);";
+        } else if (diffDays <= 7) {
+            statusColor = "text-warning";
+            cardStyle = "background: #fff9db; border: 1px solid #fab005 !important;";
+        }
+
+        html += `
+        <div class="card p-2 mb-2 border shadow-sm" style="${cardStyle}">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold fs-6">جهاز رقم: ${toArabicDigits(m.id)}</span>
+                ${isAdminAuthenticated ? `
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary py-0" onclick="editMachine('${m.id}', '${m.freq}', '${m.lastDate}')" title="تعديل"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-outline-danger py-0" onclick="deleteMachine('${m.id}')" title="حذف"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                ` : ''}
+            </div>
+            <div class="small fw-bold mt-1">
+                <div class="text-muted">آخر تبديل: ${toArabicDigits(formatDateCorrect(lastDateObj))}</div>
+                <div class="${statusColor}">
+                    ${diffDays <= 0 ? '⚠️ استحق التبديل منذ: ' : 'موعد الاستحقاق القادم: '}
+                    ${toArabicDigits(formatDateCorrect(nextDateObj))}
+                    <span style="font-size: 0.65rem;">(${toArabicDigits(Math.abs(diffDays))} يوم)</span>
+                </div>
+            </div>
+        </div>`;
+    });
+    area.innerHTML = html;
+    
+    // تحديث رقم الإشعار على الأيقونة الرئيسية فوراً بعد الرسم
+    if (typeof updateMachineNotificationBadge === "function") {
+        updateMachineNotificationBadge();
+    }
+}
+
+function showAddMachineForm() {
+    document.getElementById('machineFormArea').style.display = 'block';
+    document.getElementById('editMachineOldId').value = "";
+    document.getElementById('machineId').value = "";
+    document.getElementById('machineFreq').value = "90";
+    document.getElementById('machineLastChange').valueAsDate = new Date();
+}
+
+function hideMachineForm() { document.getElementById('machineFormArea').style.display = 'none'; }
+
+function editMachine(id, freq, date) {
+    document.getElementById('machineFormArea').style.display = 'block';
+    document.getElementById('editMachineOldId').value = id;
+    document.getElementById('machineId').value = id;
+    document.getElementById('machineFreq').value = freq;
+    document.getElementById('machineLastChange').value = date;
+}
+
+function saveMachine() {
+    const pwd = scheduleEditorPassword;
+    const mData = {
+        oldId: document.getElementById('editMachineOldId').value,
+        id: document.getElementById('machineId').value,
+        freq: document.getElementById('machineFreq').value,
+        lastDate: document.getElementById('machineLastChange').value
+    };
+    
+    if (!mData.id || !mData.freq || !mData.lastDate) return alert("أكمل البيانات");
+
+    // اختيار الزر بدقة لضمان عدم توقف الكود
+    const btn = document.querySelector('#machineFormArea .btn-success');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "جاري الحفظ...";
+    }
+
+    google.script.run.withSuccessHandler(res => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = "حفظ";
+        }
+
+        if (res.success) {
+            // تحديث كائن الذاكرة المركزية dataStore لضمان ظهور التاريخ فوراً
+            if (!dataStore.machinesData) dataStore.machinesData = [];
+            
+            const updatedData = {
+                id: mData.id,
+                freq: mData.freq,
+                lastDate: mData.lastDate, // التاريخ الجديد
+                notes: ""
+            };
+
+            // تحديث المصفوفة المحلية فوراً
+            const idx = dataStore.machinesData.findIndex(m => m.id.toString() === (mData.oldId || mData.id).toString());
+            
+            if (idx !== -1) {
+                dataStore.machinesData[idx] = updatedData;
+            } else {
+                dataStore.machinesData.push(updatedData);
+            }
+
+            // ترتيب الأجهزة حسب الرقم لضمان التنسيق
+            dataStore.machinesData.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+            
+            // حفظ التغيير في ذاكرة التخزين المؤقت (Persistent Offline Storage)
+            saveDataCache(dataStore); 
+
+            // إعادة رسم الواجهة بالبيانات الجديدة (بدون تحديث الصفحة)
+            renderMachineList(dataStore.machinesData);
+            
+            // تحديث إشعار الأيقونة في الشاشة الرئيسية فوراً ليزول اللون الأحمر
+            if (typeof updateMachineNotificationBadge === "function") {
+                updateMachineNotificationBadge();
+            }
+
+            // إغلاق نافذة التعديل بعد تحديث البيانات
+            hideMachineForm();
+            
+            // تأكيد بصري بسيط في متصفح المطور
+            console.log("تم تحديث تاريخ الجهاز بنجاح وتحديث الإشعارات أوفلاين");
+            console.log("تم تحديث تاريخ الجهاز بنجاح في الذاكرة المحلية");
+        } else {
+            alert("خطأ أثناء الحفظ: " + res.error);
+        }
+    }).saveMachineServer(pwd, mData);
+}
+
+function deleteMachine(id) {
+    if (!confirm(`هل أنت متأكد من حذف الجهاز رقم (${toArabicDigits(id)}) نهائياً؟`)) return;
+    
+    const pwd = scheduleEditorPassword;
+    if (!pwd) return alert("الرجاء تسجيل الدخول أولاً كمسؤول.");
+
+    google.script.run.withSuccessHandler(res => {
+        if (res.success) {
+            loadMachines(); // إعادة تحميل القائمة بعد الحذف
+        } else {
+            alert("❌ فشل الحذف: " + res.error);
+        }
+    }).deleteMachineServer(pwd, id);
+}
+
+function updateMachineNotificationBadge() {
+    if (!dataStore || !dataStore.machinesData) return;
+
+    let dueCount = 0;
+    const now = new Date();
+    now.setHours(0,0,0,0);
+
+    dataStore.machinesData.forEach(m => {
+        const lastDateObj = new Date(m.lastDate);
+        const nextDateObj = new Date(lastDateObj);
+        nextDateObj.setDate(lastDateObj.getDate() + parseInt(m.freq));
+        
+        const diffDays = Math.ceil((nextDateObj - now) / (1000 * 60 * 60 * 24));
+        
+        // إذا استحق التبديل اليوم أو خلال 3 أيام أو متأخر فعلياً
+        if (diffDays <= 3) {
+            dueCount++;
+        }
+    });
+
+    const badge = document.getElementById('machineBadge');
+    const icon = document.getElementById('machineIcon');
+
+    if (dueCount > 0) {
+        badge.innerText = toArabicDigits(dueCount);
+        badge.style.display = 'block';
+        icon.style.color = '#dc3545'; // تغيير لون الأيقونة للأحمر
+    } else {
+        badge.style.display = 'none';
+        icon.style.color = '#9c27b0'; // اللون البنفسجي الأصلي
+    }
+}
+
+function updateVaccineNotificationBadge() {
+    if (!dataStore || !dataStore.patientsDetailedInfo) return;
+
+    let dueCount = 0;
+    const now = new Date();
+    now.setHours(0,0,0,0);
+
+    dataStore.patientsDetailedInfo.forEach(p => {
+        // استخدام دالة الحساب الموجودة أصلاً في البرنامج لضمان الدقة
+        const calc = calculateHbvStatusAndNextDate(p["HBV1"], p["HBV2"], p["HBV3"]);
+        
+        if (calc.nextDateStr && calc.nextDateStr !== "---") {
+            const nextDoseDate = new Date(calc.nextDateStr.replace(/\//g, '-'));
+            const diffTime = nextDoseDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            // إذا بقي للموعد 10 أيام أو أقل (أو الموعد قد فات فعلياً)
+            if (diffDays <= 10) {
+                dueCount++;
+            }
+        }
+    });
+
+    const badge = document.getElementById('vaccineBadge');
+    const icon = document.getElementById('vaccineIcon');
+
+    if (dueCount > 0) {
+        badge.innerText = toArabicDigits(dueCount);
+        badge.style.display = 'block';
+        icon.style.color = '#dc3545'; // يتحول للأحمر عند الاستحقاق
+    } else {
+        badge.style.display = 'none';
+        icon.style.color = '#0d6efd'; // يرجع للأزرق الافتراضي
+    }
+}
 </script>
 </body>
 </html>
